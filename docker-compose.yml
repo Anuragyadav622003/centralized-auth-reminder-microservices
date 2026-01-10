@@ -1,0 +1,62 @@
+version: '3.9'
+
+services:
+  # --------------------
+  # PostgreSQL (Auth Service)
+  # --------------------
+  postgres-auth:
+    image: postgres:16-alpine
+    container_name: postgres-auth
+    environment:
+      POSTGRES_DB: auth_db
+      POSTGRES_USER: auth_user
+      POSTGRES_PASSWORD: auth_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - auth_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth_db"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+      start_period: 5s
+
+  # --------------------
+  # MongoDB (Reminder Service)
+  # --------------------
+  mongo-reminder:
+    image: mongo:7
+    container_name: mongo-reminder
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: reminder_user
+      MONGO_INITDB_ROOT_PASSWORD: reminder_pass
+      MONGO_INITDB_DATABASE: reminder_db
+    ports:
+      - "27017:27017"
+    volumes:
+      - reminder_mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # --------------------
+  # Redis (Microservice Transport / Cache)
+  # --------------------
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+volumes:
+  auth_pg_data:
+  reminder_mongo_data:

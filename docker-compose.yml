@@ -26,7 +26,7 @@ services:
   # MongoDB (Reminder Service)
   # --------------------
   mongo-reminder:
-    image: mongo:7
+    image: mongo:latest
     container_name: mongo-reminder
     environment:
       MONGO_INITDB_ROOT_USERNAME: reminder_user
@@ -43,9 +43,9 @@ services:
       retries: 5
       start_period: 10s
 
-  # --------------------
+  # ----------------------
   # Redis (Microservice Transport / Cache)
-  # --------------------
+  # ----------------------
   redis:
     image: redis:7-alpine
     container_name: redis

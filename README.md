@@ -6,17 +6,131 @@ This is a microservices-based application built with NestJS and Nx, featuring ce
 
 ## Tech Stack
 
-- **Framework**: NestJS (Node.js)
-- **Language**: TypeScript
-- **Build System**: Nx
+- **Framework**: NestJS (Node.js) - Chosen for its modular architecture, dependency injection, and excellent support for microservices
+- **Language**: TypeScript - Provides type safety, better IDE support, and reduces runtime errors
+- **Build System**: Nx - Enables efficient monorepo management, shared libraries, and optimized builds
 - **Databases**:
-  - PostgreSQL (Auth Service - user data)
-  - MongoDB (Reminder Service - reminders)
-  - Redis (caching and microservice transport)
-- **ORM**: Prisma (Auth Service)
-- **Testing**: Jest
-- **Linting**: ESLint
-- **Containerization**: Docker & Docker Compose
+  - PostgreSQL (Auth Service) - ACID-compliant relational database for user data integrity
+  - MongoDB (Reminder Service) - NoSQL database for flexible reminder data structures
+  - Redis (Caching & Transport) - High-performance caching and message broker for microservices
+- **ORM**: Prisma (Auth Service) - Type-safe database access with auto-generated client
+- **Testing**: Jest - Comprehensive testing framework with built-in mocking
+- **Linting**: ESLint - Code quality and consistency enforcement
+- **Containerization**: Docker & Docker Compose - Ensures consistent environments across development and production
+
+## Architecture & Design Decisions
+
+### Microservices Architecture
+- **API Gateway Pattern**: Single entry point for all client requests, enabling centralized routing, authentication, and rate limiting
+- **Service Separation**: Auth Service handles authentication logic, Reminder Service manages reminder data, promoting loose coupling and independent scaling
+- **TCP-based Communication**: Uses NestJS microservices with TCP transport for efficient inter-service communication
+
+### Database Choices
+- **PostgreSQL for Auth**: Chosen for its strong consistency guarantees, complex queries, and relationship management required for user authentication
+- **MongoDB for Reminders**: Selected for its flexibility in handling unstructured reminder data and potential for horizontal scaling
+
+### Security Implementation
+- **JWT Authentication**: Stateless token-based authentication with access and refresh tokens
+- **Password Hashing**: Secure password storage (implementation ready for bcrypt)
+- **Role-based Access Control**: User roles (CLIENT/ADMIN) for future authorization features
+
+### Development Best Practices
+- **Nx Monorepo**: Efficient code sharing, consistent tooling, and optimized CI/CD pipelines
+- **TypeScript**: Compile-time type checking prevents common errors
+- **Comprehensive Testing**: Unit tests, integration tests, and E2E tests ensure code reliability
+- **Docker Containerization**: Consistent development and deployment environments
+
+## Key Features Implemented
+
+### Authentication System
+- ✅ User registration with email validation
+- ✅ Secure login with JWT token generation
+- ✅ Refresh token mechanism for session management
+- ✅ Password hashing (bcrypt integration ready)
+- ✅ User roles (CLIENT/ADMIN) for future RBAC
+
+### Microservices Communication
+- ✅ TCP-based inter-service messaging
+- ✅ API Gateway routing and load balancing
+- ✅ Service discovery and health checks
+
+### Database Integration
+- ✅ Prisma ORM with PostgreSQL for auth data
+- ✅ MongoDB service with connection pooling
+- ✅ Database migrations and schema management
+- ✅ Health checks and connection monitoring
+
+### Infrastructure & DevOps
+- ✅ Docker Compose for multi-service orchestration
+- ✅ Environment-based configuration
+- ✅ Health checks for all services
+- ✅ Development and production-ready setups
+
+### Testing & Quality Assurance
+- ✅ Unit tests for all services
+- ✅ E2E tests for critical user journeys
+- ✅ ESLint configuration for code quality
+- ✅ Jest testing framework integration
+
+## Security Features
+
+- **JWT Token Authentication**: Stateless authentication with configurable expiration
+- **Refresh Token Rotation**: Secure token renewal mechanism
+- **Environment Variable Management**: Sensitive data stored securely
+- **Input Validation**: DTOs for request validation
+- **CORS Configuration**: Cross-origin resource sharing setup
+- **Rate Limiting**: Ready for implementation at API Gateway level
+
+## Database Schema
+
+### Auth Service (PostgreSQL)
+```sql
+- Users: id, email, password, role, timestamps
+- RefreshTokens: id, token, userId, expiresAt
+```
+
+### Reminder Service (MongoDB)
+- Flexible schema for reminder documents (expandable)
+
+## Testing Strategy
+
+- **Unit Tests**: Service logic, utilities, and helpers
+- **Integration Tests**: Database operations and service interactions
+- **E2E Tests**: Complete user workflows through API Gateway
+- **Test Coverage**: Comprehensive coverage for critical paths
+
+## Performance & Scalability
+
+- **Horizontal Scaling**: Microservices can be scaled independently
+- **Database Connection Pooling**: Optimized database connections
+- **Caching Layer**: Redis for session storage and caching
+- **Asynchronous Processing**: Non-blocking operations with promises
+- **Health Monitoring**: Built-in health checks for all services
+
+## Challenges Overcome
+
+- **Microservices Coordination**: Implemented TCP communication between services
+- **Database Schema Design**: Chose appropriate databases for different data types
+- **Authentication Flow**: JWT implementation with refresh tokens
+- **Docker Orchestration**: Multi-service setup with health checks
+- **Nx Configuration**: Proper monorepo setup for microservices
+
+## Future Enhancements
+
+- [ ] Complete Reminder Service CRUD operations
+- [ ] Role-based authorization guards
+- [ ] API rate limiting and throttling
+- [ ] Logging and monitoring (ELK stack)
+- [ ] Message queuing (RabbitMQ/Kafka)
+- [ ] API documentation (Swagger/OpenAPI)
+- [ ] CI/CD pipeline setup
+- [ ] Kubernetes deployment
+- [ ] Caching strategies implementation
+- [ ] Email notifications for reminders
+
+## Repository
+
+This project is hosted on GitHub: [centralized-auth-reminder-microservices](https://github.com/Anuragyadav622003/centralized-auth-reminder-microservices)
 
 ## Folder Structure
 

@@ -11,7 +11,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
   'refresh',
 ) {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly prismaService: PrismaService,
     config: ConfigService,
   ) {
     const secret = config.get<string>('JWT_REFRESH_SECRET');
@@ -25,7 +25,7 @@ export class RefreshTokenStrategy extends PassportStrategy(
   }
 
   async validate(payload: any) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prismaService.prisma.user.findUnique({
       where: { id: payload.sub },
       select: { id: true, email: true, role: true },
     });

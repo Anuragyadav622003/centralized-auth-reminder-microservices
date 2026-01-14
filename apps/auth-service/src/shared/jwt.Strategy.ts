@@ -8,7 +8,7 @@ import { ConfigService } from '@nestjs/config';
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(
-    private readonly prisma: PrismaService,
+    private readonly prismaService: PrismaService,
     config: ConfigService,
   ) {
     const secret = config.get<string>('JWT_ACCESS_SECRET');
@@ -22,7 +22,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   }
 
   async validate(payload: any) {
-    const user = await this.prisma.user.findUnique({
+    const user = await this.prismaService.prisma.user.findUnique({
       where: { id: payload.sub },
       select: { id: true, email: true, role: true },
     });

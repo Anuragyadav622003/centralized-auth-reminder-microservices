@@ -11,12 +11,24 @@ export class AuthController {
 
   @MessagePattern('auth.register')
   register(@Payload() dto: RegisterDto) {
-   
+   console.log('auth-service/register')
     return this.authService.register(dto);
   }
 
   @MessagePattern('auth.login')
   login(@Payload() dto: LoginDto) {
     return this.authService.login(dto);
+  }
+
+  @MessagePattern('user.profile')
+  getProfile(@Payload() userId:number){
+  
+    return this.authService.getProfile(userId);
+  }
+
+  @MessagePattern('validate.token')
+  validToken(@Payload() payload:any){
+    console.log("payload",payload?.token)
+    return this.authService.validateToken(payload)
   }
 }

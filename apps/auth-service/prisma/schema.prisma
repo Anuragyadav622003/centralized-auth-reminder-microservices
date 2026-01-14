@@ -1,10 +1,12 @@
 generator client {
   provider = "prisma-client-js"
   output   = "../src/generated/prisma"
+  engineType = "library"
 }
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 enum Role {
@@ -29,3 +31,4 @@ model RefreshToken {
   expiresAt DateTime
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
+ 

@@ -1,28 +1,17 @@
 import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ClientsModule, Transport } from '@nestjs/microservices';
-import { MICROSERVICE_CLIENTS } from './constants'
+import { AuthModule } from '../auth/auth.module';
+import { MicroserviceClientsModule } from '../shared/microservice-clients.module';
+import { ReminderModule } from '../reminder/reminder.module';
+
+
 
 
 @Module({
-  imports: [ClientsModule.register([
-    {
-      name: MICROSERVICE_CLIENTS.AUTH_SERVICE,
-      transport: Transport.TCP,
-      options: {
-        port: 4001
-      }
-    },
-    {
-      name: MICROSERVICE_CLIENTS.REMINDER_SERVICE,
-      transport: Transport.TCP,
-      options: {
-        port: 4002
-      }
-    }
-  ])],
+  imports: [ AuthModule,ReminderModule,MicroserviceClientsModule],
   controllers: [AppController],
   providers: [AppService],
 })
 export class AppModule { }
+ 

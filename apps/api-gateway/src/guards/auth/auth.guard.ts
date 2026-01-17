@@ -1,6 +1,6 @@
 import { CanActivate, ExecutionContext, Inject, Injectable, UnauthorizedException } from '@nestjs/common';
 import { firstValueFrom } from 'rxjs';
-import { MICROSERVICE_CLIENTS } from '../../app/constants';
+import { MICROSERVICE_CLIENTS } from '../../shared/constants';
 import {  ClientProxy } from '@nestjs/microservices';
 
 @Injectable()
@@ -18,7 +18,6 @@ export class AuthGuard implements CanActivate {
   
     if (!authHeader) throw new UnauthorizedException("missing token!");
     const result = await firstValueFrom(this.authClient.send('validate.token',{token:authHeader}));
-    console.log("auth guard3",result)
     if(!result.isValid) throw new UnauthorizedException('Invalid Token');
     req.user = result.user;
     return true;

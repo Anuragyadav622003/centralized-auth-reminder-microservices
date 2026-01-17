@@ -2,11 +2,13 @@ import { Module } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
-import { MongoDBService } from '../shared/mongodb.service';
+import { DatabaseModule} from '../shared/mangoose.module';
+import { ScheduleModule } from '@nestjs/schedule';
+import { ReminderModule } from '../reminder/reminder.module';
 
 @Module({
-  imports: [ConfigModule],
+  imports: [ConfigModule.forRoot({isGlobal:true}),ScheduleModule.forRoot(),DatabaseModule,ReminderModule],
   controllers: [AppController],
-  providers: [AppService,MongoDBService],
+  providers: [AppService],
 })
 export class AppModule {}

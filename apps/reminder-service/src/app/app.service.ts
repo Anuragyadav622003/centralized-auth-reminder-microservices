@@ -1,8 +1,10 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable,Logger } from '@nestjs/common';
+
 
 @Injectable()
 export class AppService {
-  getData(): { message: string } {
-    return { message: 'Hello API' };
+   private readonly logger = new Logger();
+  getData() {
+   this.logger.debug('Called when the current second is 45');
   }
 }

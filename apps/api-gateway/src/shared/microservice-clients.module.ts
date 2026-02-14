@@ -18,7 +18,7 @@ import { MICROSERVICE_CLIENTS } from './constants';
     ]),
   ],
   exports: [
-    ClientsModule, // 👈 VERY IMPORTANT
+    ClientsModule, 
   ],
 })
 export class MicroserviceClientsModule {}

@@ -28,7 +28,7 @@ services:
   mongo-reminder:
     image: mongo:latest
     container_name: mongo-reminder
-    environment:
+    environment: 
       MONGO_INITDB_ROOT_USERNAME: reminder_user
       MONGO_INITDB_ROOT_PASSWORD: reminder_pass
       MONGO_INITDB_DATABASE: reminder_db
@@ -57,6 +57,16 @@ services:
       timeout: 3s
       retries: 5
 
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    ports:
+      - "8001:8001"
+    volumes:
+      - redisinsight_data:/data
+
 volumes:
   auth_pg_data:
   reminder_mongo_data:
+  redisinsight_data:

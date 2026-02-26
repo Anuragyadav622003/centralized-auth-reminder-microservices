@@ -57,7 +57,20 @@ services:
       timeout: 3s
       retries: 5
 
+
+  redisinsight:
+    image: redis/redisinsight:latest
+    container_name: redisinsight
+    ports:
+      - "8001:8001"
+    volumes:
+      - redisinsight_data:/data
+
 volumes:
   auth_pg_data:
   reminder_mongo_data:
+<<<<<<< HEAD
   
+=======
+  redisinsight_data:
+>>>>>>> 9289ba1a983c39eac1aa30e04e631266713984d1

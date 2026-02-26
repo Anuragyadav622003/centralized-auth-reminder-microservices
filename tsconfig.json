@@ -20,6 +20,36 @@
     },
     {
       "path": "./apps/reminder-service"
+    },
+    {
+      "path": "./apps/tenant-service-e2e"
+    },
+    {
+      "path": "./apps/tenant-service"
+    },
+    {
+      "path": "./apps/payment-service-e2e"
+    },
+    {
+      "path": "./apps/payment-service"
+    },
+    {
+      "path": "./apps/billing-service-e2e"
+    },
+    {
+      "path": "./apps/billing-service"
+    },
+    {
+      "path": "./apps/notification-service-e2e"
+    },
+    {
+      "path": "./apps/notification-service"
+    },
+    {
+      "path": "./shared-events"
+    },
+    {
+      "path": "./shared-types"
     }
   ]
 }

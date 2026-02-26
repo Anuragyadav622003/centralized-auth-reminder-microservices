@@ -2,7 +2,7 @@
   "name": "@org/api-gateway",
   "version": "0.0.1",
   "private": true,
-  "nx": {
+ "nx": {
     "targets": {
       "build": {
         "executor": "nx:run-commands",
@@ -84,9 +84,11 @@
   },
   "dependencies": {
     "@nestjs/common": "^11.0.0",
+    "@nestjs/config": "^4.0.3",
     "@nestjs/core": "^11.0.0",
     "@nestjs/platform-express": "^11.0.0",
     "@nestjs/throttler": "^6.5.0",
+    "redis": "^5.10.0",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
     "tslib": "^2.3.0"

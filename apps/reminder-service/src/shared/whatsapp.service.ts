@@ -1,17 +1,17 @@
 import { Injectable, Logger } from '@nestjs/common';
-import { Twilio } from 'twilio';
+import Twilio from 'twilio'; // default import because Twilio is CommonJS
 
 @Injectable()
 export class WhatsAppService {
-  private client: Twilio;
+  private client: ReturnType<typeof Twilio>;
   private readonly logger = new Logger(WhatsAppService.name);
 
   constructor() {
-    this.client = new Twilio(
+    this.client = Twilio(
       process.env.TWILIO_ACCOUNT_SID,
-      process.env.TWILIO_AUTH_TOKEN,
+      process.env.TWILIO_AUTH_TOKEN
     );
-  }
+  } 
 
   async sendWhatsAppMessage(to: string, message: string) {
     await this.client.messages.create({

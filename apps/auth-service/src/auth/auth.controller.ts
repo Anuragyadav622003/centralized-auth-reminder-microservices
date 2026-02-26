@@ -5,7 +5,7 @@ import { AuthService } from './auth.service';
 import { RegisterDto } from './dto/register.dto';
 import { LoginDto } from './dto/login.dto';
 
-@Controller()
+@Controller()    
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -20,7 +20,7 @@ export class AuthController {
     return this.authService.login(dto);
   }
 
-  @MessagePattern('user.profile')
+  @MessagePattern('auth.getProfile')
   getProfile(@Payload() userId:number){
   
     return this.authService.getProfile(userId);

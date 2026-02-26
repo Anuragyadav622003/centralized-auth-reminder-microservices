@@ -27,7 +27,8 @@
           "buildDepsName": "build-deps",
           "watchDepsName": "watch-deps"
         }
-      }
+      },
+      "exclude": ["shared-dto/*", "shared-types/*"]
     },
     {
       "plugin": "@nx/webpack/plugin",
@@ -55,8 +56,23 @@
         "apps/api-gateway-e2e/**/*",
         "apps/auth-service-e2e/**/*",
         "reminder-service-e2e/**/*",
-        "apps/reminder-service-e2e/**/*"
+        "apps/reminder-service-e2e/**/*",
+        "apps/tenant-service-e2e/**/*",
+        "apps/payment-service-e2e/**/*",
+        "apps/billing-service-e2e/**/*",
+        "apps/notification-service-e2e/**/*",
+        "apps/notification-service-e2e/**/*",
+        "apps/tenant-service-e2e/**/*"
       ]
+    },
+    {
+      "plugin": "@nx/js/typescript",
+      "include": ["shared-dto/*", "shared-types/*"],
+      "options": {
+        "typecheck": {
+          "targetName": "typecheck"
+        }
+      }
     }
   ],
   "nxCloudId": "6960dc5138e1c65d2890ff72",

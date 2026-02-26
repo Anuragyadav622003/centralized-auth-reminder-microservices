@@ -74,6 +74,7 @@ export class AuthService {
   }
 
   async login(payload: LoginDto) {
+    console.log(payload)
     if (!payload.email || !payload.password) {
       throw new BadRequestException('Email and password are required');
     }
@@ -119,7 +120,9 @@ export class AuthService {
     const token = parts[1];
 
     
-    const {sub,email,role} = await this.jwt.verifyAsync(token);
+    const {sub,email,role} = await this.jwt.verifyAsync(token,{
+  secret: this.config.get<string>('JWT_ACCESS_SECRET'),
+});
 
    
     if (!sub || !email || !role) {

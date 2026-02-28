@@ -1,0 +1,104 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  engineType      = "library"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["payment"]
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+  PARTIAL
+
+  @@schema("payment")
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  STRIPE
+  CASH
+  BANK_TRANSFER
+
+  @@schema("payment")
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  PARTIAL
+
+  @@schema("payment")
+}
+
+model Invoice {
+  id                String        @id @default(uuid())
+  tenantId          String
+  clientId          String
+  createdById       String
+  
+  invoiceNumber     String
+  amount            Float
+  currency          String        @default("INR")
+  dueDate           DateTime
+  issuedDate        DateTime      @default(now())
+  status            InvoiceStatus @default(PENDING)
+  
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  paymentLink       String?
+  
+  pdfUrl            String?
+  notes             String?
+  
+  payments          Payment[]
+
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@schema("payment")
+}
+
+model Payment {
+  id                  String          @id @default(uuid())
+  invoiceId           String
+  invoice             Invoice         @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  tenantId            String
+  
+  amount              Float
+  currency            String          @default("INR")
+  provider            PaymentProvider @default(RAZORPAY)
+  providerPaymentId   String?
+  providerOrderId     String?
+  
+  status              PaymentStatus   @default(PENDING)
+  paidAt              DateTime?
+  
+  paymentMethod       String?
+  failureReason       String?
+  metadata            String?
+  
+  refundAmount        Float?
+  refundedAt          DateTime?
+  refundReason        String?
+
+  createdAt           DateTime        @default(now())
+  updatedAt           DateTime        @updatedAt
+
+  @@index([invoiceId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([providerPaymentId])
+  @@schema("payment")
+}

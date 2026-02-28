@@ -1,14 +1,15 @@
 import { Module } from '@nestjs/common';
-import { AppController } from './app.controller';
-import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
-import { DatabaseModule} from '../shared/mangoose.module';
 import { ScheduleModule } from '@nestjs/schedule';
+import { DatabaseModule } from '../shared/mangoose.module';
 import { ReminderModule } from '../reminder/reminder.module';
 
 @Module({
-  imports: [ConfigModule.forRoot({isGlobal:true}),ScheduleModule.forRoot(),DatabaseModule,ReminderModule],
-  controllers: [AppController],
-  providers: [AppService],
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+    ScheduleModule.forRoot(),
+    DatabaseModule,
+    ReminderModule,
+  ],
 })
 export class AppModule {}

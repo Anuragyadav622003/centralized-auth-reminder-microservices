@@ -2,33 +2,35 @@ version: '3.9'
 
 services:
   # --------------------
-  # PostgreSQL (Auth Service)
+  # PostgreSQL (Core Database)
   # --------------------
-  postgres-auth:
+  postgres-core:
     image: postgres:16-alpine
-    container_name: postgres-auth
+    container_name: postgres-core
     environment:
-      POSTGRES_DB: auth_db
-      POSTGRES_USER: auth_user
-      POSTGRES_PASSWORD: auth_pass
+      POSTGRES_DB: paypulse_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
     ports:
       - "5432:5432"
     volumes:
-      - auth_pg_data:/var/lib/postgresql/data
+      - postgres_data:/var/lib/postgresql/data
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U auth_user -d auth_db"]
+      test: ["CMD-SHELL", "pg_isready -U postgres -d paypulse_db"]
       interval: 5s
       timeout: 3s
       retries: 5
       start_period: 5s
+    networks:
+      - paypulse-network
 
   # --------------------
   # MongoDB (Reminder Service)
   # --------------------
   mongo-reminder:
-    image: mongo:latest
+    image: mongo:7-jammy
     container_name: mongo-reminder
-    environment: 
+    environment:
       MONGO_INITDB_ROOT_USERNAME: reminder_user
       MONGO_INITDB_ROOT_PASSWORD: reminder_pass
       MONGO_INITDB_DATABASE: reminder_db
@@ -42,21 +44,26 @@ services:
       timeout: 5s
       retries: 5
       start_period: 10s
+    networks:
+      - paypulse-network
 
   # --------------------
-  # Redis (Microservice Transport / Cache)
+  # Redis
   # --------------------
   redis:
     image: redis:7-alpine
     container_name: redis
     ports:
       - "6379:6379"
+    volumes:
+      - redis_data:/data
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 5s
       timeout: 3s
       retries: 5
-
+    networks:
+      - paypulse-network
 
   redisinsight:
     image: redis/redisinsight:latest
@@ -65,12 +72,178 @@ services:
       - "8001:8001"
     volumes:
       - redisinsight_data:/data
+    networks:
+      - paypulse-network
+
+  # --------------------
+  # API Gateway
+  # --------------------
+  api-gateway:
+    build:
+      context: .
+      dockerfile: apps/api-gateway/Dockerfile
+    container_name: api-gateway
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - PORT=3000
+      - REDIS_URL=redis://redis:6379
+      - AUTH_SERVICE_URL=auth-service:4001
+      - REMINDER_SERVICE_URL=reminder-service:4002
+      - TENANT_SERVICE_URL=tenant-service:4004
+      - BILLING_SERVICE_URL=billing-service:4005
+      - PAYMENT_SERVICE_URL=payment-service:4006
+      - NOTIFICATION_SERVICE_URL=notification-service:4007
+    depends_on:
+      redis:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+      tenant-service:
+        condition: service_started
+    networks:
+      - paypulse-network
+
+  # --------------------
+  # Auth Service
+  # --------------------
+  auth-service:
+    build:
+      context: .
+      dockerfile: apps/auth-service/Dockerfile
+    container_name: auth-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4001
+      - DATABASE_URL=postgresql://postgres:password@postgres-core:5432/paypulse_db?schema=auth
+      - JWT_SECRET=${JWT_SECRET:-your-secret-key}
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your-refresh-secret}
+    depends_on:
+      postgres-core:
+        condition: service_healthy
+    networks:
+      - paypulse-network
+
+  # --------------------
+  # Tenant Service
+  # --------------------
+  tenant-service:
+    build:
+      context: .
+      dockerfile: apps/tenant-service/Dockerfile
+    container_name: tenant-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4004
+      - DATABASE_URL=postgresql://postgres:password@postgres-core:5432/paypulse_db?schema=tenant
+    depends_on:
+      postgres-core:
+        condition: service_healthy
+      auth-service:
+        condition: service_started
+    networks:
+      - paypulse-network
+
+  # --------------------
+  # Billing Service
+  # --------------------
+  billing-service:
+    build:
+      context: .
+      dockerfile: apps/billing-service/Dockerfile
+    container_name: billing-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4005
+      - DATABASE_URL=postgresql://postgres:password@postgres-core:5432/paypulse_db?schema=billing
+    depends_on:
+      postgres-core:
+        condition: service_healthy
+      tenant-service:
+        condition: service_started
+    networks:
+      - paypulse-network
+
+  # --------------------
+  # Payment Service
+  # --------------------
+  payment-service:
+    build:
+      context: .
+      dockerfile: apps/payment-service/Dockerfile
+    container_name: payment-service
+    ports:
+      - "4006:4006"
+    environment:
+      - NODE_ENV=production
+      - PORT=4006
+      - DATABASE_URL=postgresql://postgres:password@postgres-core:5432/paypulse_db?schema=payment
+      - RAZORPAY_KEY_ID=${RAZORPAY_KEY_ID}
+      - RAZORPAY_KEY_SECRET=${RAZORPAY_KEY_SECRET}
+      - RAZORPAY_WEBHOOK_SECRET=${RAZORPAY_WEBHOOK_SECRET}
+    depends_on:
+      postgres-core:
+        condition: service_healthy
+      billing-service:
+        condition: service_started
+    networks:
+      - paypulse-network
+
+  # --------------------
+  # Notification Service
+  # --------------------
+  notification-service:
+    build:
+      context: .
+      dockerfile: apps/notification-service/Dockerfile
+    container_name: notification-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4007
+      - DATABASE_URL=postgresql://postgres:password@postgres-core:5432/paypulse_db?schema=notification
+      - REDIS_URL=redis://redis:6379
+      - SENDGRID_API_KEY=${SENDGRID_API_KEY}
+      - SENDGRID_FROM_EMAIL=${SENDGRID_FROM_EMAIL}
+      - WHATSAPP_ACCESS_TOKEN=${WHATSAPP_ACCESS_TOKEN}
+      - WHATSAPP_PHONE_NUMBER_ID=${WHATSAPP_PHONE_NUMBER_ID}
+    depends_on:
+      postgres-core:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - paypulse-network
+
+  # --------------------
+  # Reminder Service
+  # --------------------
+  reminder-service:
+    build:
+      context: .
+      dockerfile: apps/reminder-service/Dockerfile
+    container_name: reminder-service
+    environment:
+      - NODE_ENV=production
+      - PORT=4002
+      - MONGODB_URI=mongodb://reminder_user:reminder_pass@mongo-reminder:27017/reminder_db?authSource=admin
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      mongo-reminder:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      notification-service:
+        condition: service_started
+    networks:
+      - paypulse-network
 
 volumes:
-  auth_pg_data:
+  postgres_data:
   reminder_mongo_data:
-<<<<<<< HEAD
-  
-=======
+  redis_data:
   redisinsight_data:
->>>>>>> 9289ba1a983c39eac1aa30e04e631266713984d1
+
+networks:
+  paypulse-network:
+    driver: bridge

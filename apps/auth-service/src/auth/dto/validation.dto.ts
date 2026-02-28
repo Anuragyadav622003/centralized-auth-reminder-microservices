@@ -1,4 +1,4 @@
-import { IsBoolean, IsEmail, IsNumber, IsString } from "class-validator";
+import { IsBoolean, IsEmail, IsString } from "class-validator";
 
 export class validationTokenRequest{
     @IsString()
@@ -7,14 +7,14 @@ export class validationTokenRequest{
 
 export class userDto{
     
-    @IsNumber()
-    id!: number; 
+    @IsString()
+    id!: string; 
     
     @IsEmail()
     email!:string;
     
     @IsString()
-    role!:string;
+    globalRole!:string;
 
 }
 

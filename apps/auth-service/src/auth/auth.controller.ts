@@ -21,9 +21,8 @@ export class AuthController {
   }
 
   @MessagePattern('auth.getProfile')
-  getProfile(@Payload() userId:number){
-  
-    return this.authService.getProfile(userId);
+  getProfile(@Payload() payload: { id: string }){
+    return this.authService.getProfile(payload.id);
   }
 
   @MessagePattern('validate.token')

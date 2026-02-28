@@ -26,15 +26,15 @@ export class AuthService {
     private readonly prismaService: PrismaService,
   ) { }
 
-  private signAccessToken(user: { id: number; email: string; role: string }) {
+  private signAccessToken(user: { id: string; email: string; globalRole: string }) {
     return this.jwt.sign({
       sub: user.id,
       email: user.email,
-      role: user.role,
+      role: user.globalRole,
     });
   }
 
-  private signRefreshToken(userId: number) {
+  private signRefreshToken(userId: string) {
     return this.jwt.sign(
       { sub: userId },
       {
@@ -63,7 +63,7 @@ export class AuthService {
       data: {
         email: payload.email,
         password: hashedPassword,
-        role: 'CLIENT',
+        globalRole: 'USER',
       },
     });
 
@@ -96,7 +96,7 @@ export class AuthService {
       accessToken: this.signAccessToken({
         id: user.id,
         email: user.email,
-        role: user.role,
+        globalRole: user.globalRole,
       }),
       refreshToken: this.signRefreshToken(user.id),
     };
@@ -142,7 +142,7 @@ export class AuthService {
       user: {
         id: sub,
         email: email,
-        role: role,
+        globalRole: role,
       },
     };
 
@@ -160,14 +160,14 @@ export class AuthService {
 
 
 
-async getProfile(id: number): Promise<userDto> {
+async getProfile(id: string): Promise<userDto> {
   try {
     const user = await this.prismaService.prisma.user.findUnique({
       where: { id },
       select: {
         id: true,
         email: true,
-        role: true,
+        globalRole: true,
         createdAt: true,
         updatedAt: true,
       },

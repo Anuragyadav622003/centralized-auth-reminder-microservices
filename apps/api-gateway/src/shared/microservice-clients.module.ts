@@ -15,10 +15,28 @@ import { MICROSERVICE_CLIENTS } from './constants';
         transport: Transport.TCP,
         options: { port: 4002 },
       },
+      {
+        name: MICROSERVICE_CLIENTS.TENANT_SERVICE,
+        transport: Transport.TCP,
+        options: { port: 4004 },
+      },
+      {
+        name: MICROSERVICE_CLIENTS.BILLING_SERVICE,
+        transport: Transport.TCP,
+        options: { port: 4005 },
+      },
+      {
+        name: MICROSERVICE_CLIENTS.PAYMENT_SERVICE,
+        transport: Transport.TCP,
+        options: { port: 4006 },
+      },
+      {
+        name: MICROSERVICE_CLIENTS.NOTIFICATION_SERVICE,
+        transport: Transport.TCP,
+        options: { port: 4007 },
+      },
     ]),
   ],
-  exports: [
-    ClientsModule, 
-  ],
+  exports: [ClientsModule],
 })
 export class MicroserviceClientsModule {}

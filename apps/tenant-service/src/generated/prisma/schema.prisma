@@ -1,0 +1,418 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  engineType      = "library"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["tenant"]
+}
+
+// ==================== ENUMS ====================
+
+enum TenantRole {
+  OWNER
+  ADMIN
+  MEMBER
+  VIEWER
+
+  @@schema("tenant")
+}
+
+enum SubscriptionPlan {
+  FREE
+  STARTER
+  PRO
+  ENTERPRISE
+
+  @@schema("tenant")
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAST_DUE
+  CANCELLED
+  TRIAL
+  EXPIRED
+
+  @@schema("tenant")
+}
+
+enum InvoiceStatus {
+  PENDING
+  PAID
+  OVERDUE
+  CANCELLED
+  PARTIAL
+
+  @@schema("tenant")
+}
+
+enum PaymentStatus {
+  PENDING
+  SUCCESS
+  FAILED
+  REFUNDED
+  PARTIAL
+
+  @@schema("tenant")
+}
+
+enum PaymentProvider {
+  RAZORPAY
+  STRIPE
+  CASH
+  BANK_TRANSFER
+
+  @@schema("tenant")
+}
+
+// ==================== CORE TENANT MODELS ====================
+
+model Tenant {
+  id       String           @id @default(uuid())
+  name     String
+  slug     String           @unique
+  plan     SubscriptionPlan @default(FREE)
+  isActive Boolean          @default(true)
+
+  // Relations
+  memberships  Membership[]
+  subscription Subscription?
+  settings     TenantSettings?
+  usageMetrics UsageMetrics[]
+
+  // Business entities
+  clients          Client[]
+  invoices         Invoice[]
+  payments         Payment[]
+  reminderLogs     ReminderLog[]
+  notificationLogs NotificationLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([slug])
+  @@index([plan])
+  @@schema("tenant")
+}
+
+model Membership {
+  id        String     @id @default(uuid())
+  userId    String // comes from auth.User.id (UUID)
+  tenantId  String
+  role      TenantRole @default(MEMBER)
+  invitedBy String? // userId of inviter
+
+  tenant Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, tenantId])
+  @@index([userId])
+  @@index([tenantId])
+  @@schema("tenant")
+}
+
+model Subscription {
+  id       String @id @default(uuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  plan   SubscriptionPlan
+  status SubscriptionStatus @default(TRIAL)
+
+  // Razorpay integration
+  razorpaySubscriptionId String?
+  razorpayCustomerId     String?
+
+  // Billing cycle
+  currentPeriodStart DateTime
+  currentPeriodEnd   DateTime
+  cancelAtPeriodEnd  Boolean  @default(false)
+
+  // Trial
+  trialEndsAt DateTime?
+
+  // Cancellation
+  cancelledAt        DateTime?
+  cancellationReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([status])
+  @@schema("tenant")
+}
+
+model TenantSettings {
+  id       String @id @default(uuid())
+  tenantId String @unique
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Reminder settings
+  reminderIntervals     String  @default("[-3, 0, 3, 7]") // JSON array
+  defaultReminderMethod String  @default("EMAIL")
+  whatsappTemplate      String?
+  emailTemplate         String?
+  smsTemplate           String?
+
+  // Scheduling preferences
+  businessHoursOnly Boolean @default(false)
+  skipWeekends      Boolean @default(false)
+  businessStartHour Int     @default(9)
+  businessEndHour   Int     @default(18)
+
+  // Branding
+  companyLogoUrl String?
+  primaryColor   String?
+  accentColor    String?
+  customDomain   String?
+
+  // Payment settings
+  defaultPaymentTerms Int    @default(30) // Days
+  lateFeePercentage   Float?
+
+  // Invoice settings
+  invoicePrefix     String @default("INV")
+  nextInvoiceNumber Int    @default(1)
+  defaultTaxRate    Float?
+
+  // Notifications
+  notifyOnPayment Boolean @default(true)
+  notifyOnOverdue Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@schema("tenant")
+}
+
+model UsageMetrics {
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  invoicesCreated  Int @default(0)
+  remindersSent    Int @default(0)
+  clientsAdded     Int @default(0)
+  paymentsReceived Int @default(0)
+
+  month Int
+  year  Int
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, month, year])
+  @@index([tenantId])
+  @@schema("tenant")
+}
+
+// ==================== BUSINESS ENTITIES ====================
+
+model Client {
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Basic info
+  name  String
+  email String?
+  phone String?
+
+  // Business details
+  gstin String?
+  pan   String?
+
+  // Billing address
+  billingStreet     String?
+  billingCity       String?
+  billingState      String?
+  billingCountry    String? @default("India")
+  billingPostalCode String?
+
+  // Shipping address
+  shippingStreet     String?
+  shippingCity       String?
+  shippingState      String?
+  shippingCountry    String?
+  shippingPostalCode String?
+
+  // Additional info
+  notes        String?
+  tags         String[] // PostgreSQL array
+  paymentTerms Int      @default(30) // Days
+
+  // Relations
+  invoices Invoice[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([email])
+  @@schema("tenant")
+}
+
+model Invoice {
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id], onDelete: Cascade)
+
+  createdById String // User ID from auth service
+
+  // Invoice details
+  invoiceNumber String
+  amount        Float
+  currency      String        @default("INR")
+  dueDate       DateTime
+  issuedDate    DateTime      @default(now())
+  status        InvoiceStatus @default(PENDING)
+
+  // Payment integration
+  razorpayOrderId   String?
+  razorpayPaymentId String?
+  paymentLink       String?
+  paymentLinkExpiry DateTime?
+
+  // Invoice content
+  pdfUrl             String?
+  notes              String?
+  termsAndConditions String?
+
+  // Line items (stored as JSON for flexibility)
+  lineItems      String? // JSON string
+  subtotal       Float?
+  taxAmount      Float?
+  discountAmount Float?
+
+  // Relations
+  payments     Payment[]
+  reminderLogs ReminderLog[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([tenantId, invoiceNumber])
+  @@index([tenantId])
+  @@index([clientId])
+  @@index([status])
+  @@index([dueDate])
+  @@schema("tenant")
+}
+
+model Payment {
+  id        String  @id @default(uuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  tenantId  String
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  amount            Float
+  currency          String          @default("INR")
+  provider          PaymentProvider @default(RAZORPAY)
+  providerPaymentId String?
+  providerOrderId   String?
+
+  status PaymentStatus @default(PENDING)
+  paidAt DateTime?
+
+  // Metadata
+  paymentMethod String? // UPI, Card, NetBanking, etc.
+  failureReason String?
+  metadata      String? // JSON string for additional data
+
+  // Refund info
+  refundAmount Float?
+  refundedAt   DateTime?
+  refundReason String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([invoiceId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([providerPaymentId])
+  @@schema("tenant")
+}
+
+model ReminderLog {
+  id        String  @id @default(uuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  tenantId  String
+  tenant    Tenant  @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Reminder details
+  type   String // PRE_DUE, DUE_DATE, OVERDUE_3, etc.
+  method String // WHATSAPP, EMAIL, SMS
+
+  // Timing
+  scheduledAt DateTime
+  sentAt      DateTime?
+
+  // Status
+  status      String @default("PENDING") // PENDING, SENT, FAILED, CANCELLED
+  attempt     Int    @default(0)
+  maxAttempts Int    @default(3)
+
+  // Error tracking
+  errorMessage     String?
+  providerResponse String?
+
+  // Recipient
+  recipient String?
+
+  createdAt DateTime @default(now())
+
+  @@index([invoiceId])
+  @@index([tenantId])
+  @@index([status])
+  @@index([scheduledAt])
+  @@schema("tenant")
+}
+
+model NotificationLog {
+  id       String @id @default(uuid())
+  tenantId String
+  tenant   Tenant @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+
+  // Notification details
+  type      String
+  channel   String // WHATSAPP, EMAIL, SMS
+  recipient String
+  subject   String?
+  content   String?
+
+  // Template info
+  templateId   String?
+  templateData String? // JSON
+
+  // Status tracking
+  status      String    @default("PENDING")
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  openedAt    DateTime?
+
+  // Error tracking
+  errorMessage     String?
+  providerResponse String?
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+  @@schema("tenant")
+}

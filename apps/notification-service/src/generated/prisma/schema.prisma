@@ -1,0 +1,82 @@
+generator client {
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  engineType      = "library"
+  previewFeatures = ["multiSchema"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+  schemas  = ["notification"]
+}
+
+enum NotificationChannel {
+  WHATSAPP
+  EMAIL
+  SMS
+  PUSH
+
+  @@schema("notification")
+}
+
+enum NotificationStatus {
+  PENDING
+  SENT
+  DELIVERED
+  FAILED
+  OPENED
+
+  @@schema("notification")
+}
+
+model NotificationLog {
+  id       String @id @default(uuid())
+  tenantId String
+
+  type      String
+  channel   NotificationChannel
+  recipient String
+  subject   String?
+  content   String?
+
+  templateId   String?
+  templateData String?
+
+  status      NotificationStatus @default(PENDING)
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  openedAt    DateTime?
+
+  errorMessage     String?
+  providerResponse String?
+
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([status])
+  @@index([createdAt])
+  @@schema("notification")
+}
+
+model NotificationTemplate {
+  id       String @id @default(uuid())
+  tenantId String
+
+  name      String
+  type      String
+  channel   NotificationChannel
+  subject   String?
+  content   String
+  variables String[]
+
+  isDefault Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([tenantId])
+  @@index([type])
+  @@index([channel])
+  @@schema("notification")
+}

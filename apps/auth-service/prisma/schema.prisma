@@ -1,34 +1,143 @@
 generator client {
-  provider = "prisma-client-js"
-  output   = "../src/generated/prisma"
-  engineType = "library"
+  provider        = "prisma-client-js"
+  output          = "../src/generated/prisma"
+  engineType      = "library"
+  previewFeatures = ["multiSchema"]
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  schemas  = ["auth"]
 }
 
-enum Role {
-  CLIENT
-  ADMIN
+enum GlobalRole {
+  SUPER_ADMIN
+  USER
+
+  @@schema("auth")
 }
 
 model User {
-  id            Int            @id @default(autoincrement())
-  email         String         @unique
-  password      String
-  role          Role           @default(CLIENT)
-  createdAt     DateTime       @default(now())
-  updatedAt     DateTime       @updatedAt
-  refreshTokens RefreshToken[]
+  id              String          @id @default(uuid())
+  email           String          @unique
+  password        String
+  globalRole      GlobalRole      @default(USER)
+  isEmailVerified Boolean         @default(false)
+  isActive        Boolean         @default(true)
+
+  refreshTokens   RefreshToken[]
+  profile         UserProfile?
+  settings        UserSettings?
+  loginHistory    LoginHistory[]
+  passwordResets  PasswordReset[]
+
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+
+  @@index([email])
+  @@schema("auth")
+}
+
+model UserProfile {
+  id            String    @id @default(uuid())
+  userId        String    @unique
+  user          User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  firstName     String?
+  lastName      String?
+  phone         String?
+  avatarUrl     String?
+  
+  businessName  String?
+  gstin         String?
+  pan           String?
+  
+  street        String?
+  city          String?
+  state         String?
+  country       String?
+  postalCode    String?
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([userId])
+  @@schema("auth")
+}
+
+model UserSettings {
+  id                      String   @id @default(uuid())
+  userId                  String   @unique
+  user                    User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Notification preferences
+  emailNotifications      Boolean  @default(true)
+  whatsappNotifications   Boolean  @default(true)
+  smsNotifications        Boolean  @default(false)
+  pushNotifications       Boolean  @default(true)
+  marketingEmails         Boolean  @default(false)
+  
+  // Preferences
+  timezone                String   @default("Asia/Kolkata")
+  language                String   @default("en")
+  dateFormat              String   @default("DD/MM/YYYY")
+  currency                String   @default("INR")
+
+  createdAt               DateTime @default(now())
+  updatedAt               DateTime @updatedAt
+
+  @@index([userId])
+  @@schema("auth")
+}
+
+model LoginHistory {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  ipAddress   String?
+  userAgent   String?
+  deviceInfo  String?
+  location    String?
+  success     Boolean
+  failureReason String?
+  
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+  @@schema("auth")
+}
+
+model PasswordReset {
+  id          String    @id @default(uuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  token       String    @unique
+  expiresAt   DateTime
+  used        Boolean   @default(false)
+  usedAt      DateTime?
+  
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+  @@index([token])
+  @@schema("auth")
 }
 
 model RefreshToken {
-  id        Int      @id @default(autoincrement())
-  token     String
-  userId    Int
-  expiresAt DateTime
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  id         String   @id @default(uuid())
+  token      String   @unique
+  userId     String
+  expiresAt  DateTime
+  revoked    Boolean  @default(false)
+
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt  DateTime @default(now())
+
+  @@index([userId])
+  @@schema("auth")
 }
- 
